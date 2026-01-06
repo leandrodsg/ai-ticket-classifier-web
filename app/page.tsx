@@ -1,65 +1,129 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+
+type State = 'initial' | 'processing' | 'complete';
 
 export default function Home() {
+  const [state, setState] = useState<State>('initial');
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState('');
+
+  const simulateApiCall = (endpoint: string, duration: number): Promise<string> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(`Mock response from ${endpoint}`);
+      }, duration);
+    });
+  };
+
+  const handleGenerate = async () => {
+    setState('processing');
+    setProgress(0);
+    setProgressText('Generating CSV...');
+
+    try {
+      // Step 1: Call POST /api/csv/generate
+      const csvResponse = await simulateApiCall('/api/csv/generate', 1000);
+      setProgress(50);
+      setProgressText('Classifying tickets...');
+
+      // Step 2: Decode base64 (mock)
+      const decodedCsv = `ticket_id,subject,priority,category
+1,Login issues,high,Authentication
+2,Dark mode request,low,Feature Request
+3,Payment error,critical,Billing`;
+
+      // Step 3: Call POST /api/classify
+      const classifyResponse = await simulateApiCall('/api/classify', 1000);
+      setProgress(100);
+      setProgressText('Complete!');
+
+      // Simulate completion
+      setTimeout(() => {
+        setState('complete');
+      }, 500);
+    } catch (error) {
+      console.error('Error:', error);
+      setState('initial');
+      setProgress(0);
+    }
+  };
+
+  const handleOpenDashboard = () => {
+    // TODO: navigate to /dashboard
+    alert('Dashboard not implemented yet');
+  };
+
+  const handleGenerateAnother = () => {
+    setState('initial');
+    setProgress(0);
+    setProgressText('');
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-4xl font-bold mb-2">AI Ticket Classifier</h1>
+          <p className="text-lg mb-8">Automated support ticket organization</p>
+
+          {state === 'initial' && (
+            <button
+              onClick={handleGenerate}
+              className="bg-accent text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+              Generate Sample CSV
+            </button>
+          )}
+
+          {state === 'processing' && (
+            <div>
+              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                <div
+                  className="bg-accent h-4 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p>{progressText}</p>
+            </div>
+          )}
+
+          {state === 'complete' && (
+            <div>
+              <p className="text-success font-medium mb-4">Sample dataset ready!</p>
+              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                <div className="bg-success h-4 rounded-full w-full"></div>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleOpenDashboard}
+                  className="bg-accent text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition"
+                >
+                  Open Dashboard
+                </button>
+                <button
+                  onClick={handleGenerateAnother}
+                  className="border border-accent text-accent px-6 py-3 rounded-lg font-medium hover:bg-accent hover:text-white transition"
+                >
+                  Generate Another
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
+
+      <footer className="bg-accent text-white py-4">
+        <div className="flex justify-center gap-8">
+          <a href="https://github.com/leandrodsg/ai-ticket-classifier-api" target="_blank" rel="noopener noreferrer">
+            Backend API
+          </a>
+          <a href="https://github.com/leandrodsg/ai-ticket-classifier-web" target="_blank" rel="noopener noreferrer">
+            Frontend React
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
