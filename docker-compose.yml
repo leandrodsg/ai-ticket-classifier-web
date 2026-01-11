@@ -1,12 +1,19 @@
 services:
   frontend:
     build: .
-    container_name: ticket-classifier-web
+    container_name: ai-ticket-classifier-web
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - NEXT_PUBLIC_API_URL=http://host.docker.internal:8000/api
     command: npm run dev
+
+  frontend-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: ai-ticket-classifier-web-test
+    environment:
+      - NEXT_PUBLIC_API_URL=http://host.docker.internal:8000/api
+    # Override the default command to run tests
+    command: sh -c "npm run test:run && npm run e2e"
